@@ -1,106 +1,193 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
-public class CommandCenter : MonoBehaviour
+[RequireComponent(typeof(Scanner))]
+public class CommandCenter : MonoBehaviour, IPointerClickHandler
 {
-    [SerializeField] private Transform _collectorsPath;
-    [SerializeField] private Collider _map;
+    [SerializeField] private Collector _collector;
+    [SerializeField] private int _maxDrones;
 
-    private Queue<Vector3> _scannedPositions = new Queue<Vector3>();
-    private Colletctor[] _collectors;
-    private RaycastHit _hit;
-    private Vector3 _origin;
-    private float _scanDistance;
-    private float _scanRadius;
-    private float _maxRadius;
-    private float _scanStep;
+    private List<Collector> _collectors;
+    private Color _builderColor;
+    private Scanner _scanner;
+    private Flag _flag;
+    private int _resourceCount;
+    private int _resourcesToCreateBase;
+    private int _resourcesToCreateCollector;
 
     private void Awake()
     {
-        _maxRadius = _map.bounds.size.x > _map.bounds.size.z ? _map.bounds.size.x : _map.bounds.size.z;
-        _scanDistance = _map.bounds.extents.x > _map.bounds.extents.z ? _map.bounds.extents.x : _map.bounds.extents.z;
+        _scanner = GetComponent<Scanner>();
 
-        _scanRadius = 0;
-        _scanStep = 1f;
+        _flag = FindObjectOfType<Flag>();
+        _flag.gameObject.SetActive(false);
 
-        _collectorsPath.position = transform.position;
-        _origin = transform.position;
+        _builderColor = Color.green;
+
+        _resourcesToCreateBase = 5;
+        _resourcesToCreateCollector = 3;
     }
 
     private void Start()
     {
-        _collectors = new Colletctor[_collectorsPath.childCount];
+        _collectors = new List<Collector>();
 
-        for (int i = 0; i < _collectors.Length; i++)
+        if (transform.childCount > 0)
         {
-            _collectors[i] = _collectorsPath.transform.GetChild(i).GetComponent<Colletctor>();
+            _collectors.Add(GetComponentInChildren<Collector>());
+        }
+
+        for (int i = 0; i < _maxDrones; i++)
+        {
+            AddCollector();
         }
     }
 
-    private void FixedUpdate()
+    private void Update()
     {
-        if (_scanRadius < _maxRadius && CanScan())
-        {
-            TrySendCollector();
-            ChangeScanRadius();
-        }
+        TrySpendOnCollector();
 
-        if (_scannedPositions.Count > _collectors.Length + _maxRadius)
-        {
-            _scannedPositions.Dequeue();
-        }
+        TrySendToCollect();
     }
 
-    private void SetIgnorePositions(Vector3 target)
+    private void OnTriggerEnter(Collider other)
     {
-        _scannedPositions.Enqueue(target);
-    }
-
-    private void SelectCollector(Vector3 target)
-    {
-        foreach (var collector in _collectors)
+        if (other.transform.TryGetComponent<Resource>(out Resource resource) && CanEnter(resource.transform))
         {
-            if (collector.IsBusy == false)
-            {
-                collector.SetPosition(target);
-                return;
-            }
+            _resourceCount++;
+            Destroy(other.gameObject);
         }
     }
 
-    private void TrySendCollector()
+    public void OnPointerClick(PointerEventData eventData)
     {
-        if (Physics.SphereCast(_origin, _scanRadius, transform.forward, out _hit, _scanDistance)
-             && _hit.transform.TryGetComponent<Resource>(out Resource resource)
-             && _scannedPositions.Contains(resource.transform.position) == false)
+        if (_flag.isActiveAndEnabled == false)
         {
-            SetIgnorePositions(resource.transform.position);
-            SelectCollector(resource.transform.position);
+            _flag.transform.position = transform.position;            
+            _flag.gameObject.SetActive(true);
+            _flag.OnPlaced += SendBuild;
         }
     }
 
-    private bool CanScan()
+    public int GetFreeCollectorsCount()
     {
         int count = 0;
 
-        foreach (var collector in _collectors)
+        foreach (Collector collector in _collectors)
         {
-            if (collector.IsBusy)
+            if (collector.IsBusy == false)
             {
                 count++;
             }
         }
 
-        return count < _collectors.Length;
+        return count;
     }
 
-    private void ChangeScanRadius()
+    private bool CanEnter(Transform resource)
     {
-        _scanRadius += _scanStep;
+        return resource.parent != null && resource.IsChildOf(transform);
+    }
 
-        if (_scanRadius >= _maxRadius)
+    private void TrySpendOnCollector()
+    {
+        if (_resourceCount >= _resourcesToCreateCollector && _flag.isActiveAndEnabled == false)
         {
-            _scanRadius = 0;
+            _resourceCount -= _resourcesToCreateCollector;
+
+            AddCollector();
         }
+    }
+
+    private void AddCollector()
+    {
+        _collectors.Add(CreateCollector());
+    }
+
+    private Collector CreateCollector()
+    {
+        Collector collector = Instantiate(_collector, transform.position, transform.rotation);
+        collector.transform.SetParent(transform);
+
+        return collector;
+    }
+
+    private void TrySendToCollect()
+    {
+        int dronesCount = GetFreeCollectorsCount();
+        int positionCount = _scanner.GetPositionsCount();
+        int count = dronesCount <= positionCount ? dronesCount : positionCount;
+
+        for (int i = 0; i < count; i++)
+        {
+            SendCollectors(_scanner.GetPosition());
+        }
+    }
+
+    private void SendCollectors(Vector3 position)
+    {
+        Collector collector = FindFreeCollector();
+
+        collector.SetPosition(position);
+    }
+
+    private void SendBuild()
+    {
+        StartCoroutine(TrySpendOnNewBase());
+    }
+
+    private IEnumerator TrySpendOnNewBase()
+    {
+        while (_resourceCount < _resourcesToCreateBase)
+        {
+            yield return null;
+        }
+
+        _flag.OnPlaced -= SendBuild;
+
+        _resourceCount -= _resourcesToCreateBase;
+
+        SelectDroneToBuild(_flag.transform.position);
+    }
+
+    private void SelectDroneToBuild(Vector3 position)
+    {
+        StartCoroutine(TrySelectDroneToBuild(position));
+    }
+
+    private IEnumerator TrySelectDroneToBuild(Vector3 position)
+    {
+        Collector collector;
+
+        while ((collector = FindFreeCollector()) == null)
+        {
+            yield return null;
+        }
+
+        ReleaseCollector(collector, position);
+    }
+
+    private void ReleaseCollector(Collector collector, Vector3 position)
+    {
+        _collectors.Remove(collector);
+
+        collector.SetPosition(position);
+        collector.transform.GetComponent<Renderer>().material.color = _builderColor;
+        collector.transform.SetParent(null);
+    }
+
+    private Collector FindFreeCollector()
+    {
+        foreach (var collector in _collectors)
+        {
+            if (collector.IsBusy == false)
+            {
+                return collector;
+            }
+        }
+
+        return null;
     }
 }

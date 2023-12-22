@@ -1,12 +1,10 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Collider))]
 public class Resource : MonoBehaviour
 {
-    private void OnTriggerEnter(Collider other)
+    private void OnEnable()
     {
-        if (other.TryGetComponent<CommandCenter>(out CommandCenter commandCenter))
-        {
-            Destroy(gameObject);
-        }
+       GetComponent<Collider>().isTrigger = false;
     }
 }

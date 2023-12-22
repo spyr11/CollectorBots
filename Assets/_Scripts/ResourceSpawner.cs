@@ -18,7 +18,6 @@ public class ResourceSpawner : MonoBehaviour
         StartCoroutine(SetPoints(_seconds));
     }
 
-
     private IEnumerator SetPoints(float seconds)
     {
         WaitForSeconds waitForSeconds = new WaitForSeconds(seconds);
@@ -27,7 +26,7 @@ public class ResourceSpawner : MonoBehaviour
 
         while (isActive)
         {
-            Instantiate(_resource,transform.position+ GetPosition(),_resource.transform.rotation);
+           Instantiate(_resource, transform.position + GetPosition(), _resource.transform.rotation);
 
             yield return waitForSeconds;
         }
@@ -35,9 +34,10 @@ public class ResourceSpawner : MonoBehaviour
 
     private Vector3 GetPosition()
     {
-        float mapSizeX=_map.bounds.size.x/2;
-        float mapSizeZ=_map.bounds.size.z/2;
+        float mapSizeX = _map.bounds.size.x / 2;
+        float mapSizeZ = _map.bounds.size.z / 2;
         float positionY = 1f;
-        return new Vector3(Random.Range(-mapSizeX, mapSizeX), positionY, Random.Range(-mapSizeZ,mapSizeZ));
+        
+        return new Vector3(Random.Range(-mapSizeX, mapSizeX), positionY, Random.Range(-mapSizeZ, mapSizeZ));
     }
 }
