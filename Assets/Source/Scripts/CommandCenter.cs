@@ -139,10 +139,10 @@ public class CommandCenter : MonoBehaviour, IPointerClickHandler
     {
         _isReadyToBuild = true;
 
-        StartCoroutine(SelectDroneToBuild(_flag.transform.position));
+        StartCoroutine(SelectDroneToBuild());
     }
 
-    private IEnumerator SelectDroneToBuild(Vector3 position)
+    private IEnumerator SelectDroneToBuild()
     {
         Collector collector;
 
@@ -152,7 +152,7 @@ public class CommandCenter : MonoBehaviour, IPointerClickHandler
         }
 
         ReleaseCollector(collector);
-        collector.SetNewBasePosition(position);
+        collector.SetNewBasePosition(_flag.transform.position);
 
         DeactivateFlag();
 
