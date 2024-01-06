@@ -75,15 +75,12 @@ public class CommandCenter : MonoBehaviour, IPointerClickHandler
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.transform.TryGetComponent<Resource>(out Resource resource))
+        if (other.transform.TryGetComponent<Resource>(out Resource resource) && CanEnter(resource.transform))
         {
-            if (CanEnter(resource.transform))
-            {
-                OnCollected?.Invoke();
+            OnCollected?.Invoke();
 
-                Destroy(resource.gameObject);
-                _mainData.RemoveResource(resource);
-            }
+            Destroy(resource.gameObject);
+            _mainData.RemoveResource(resource);
         }
     }
 
