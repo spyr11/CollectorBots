@@ -4,15 +4,26 @@ using UnityEngine.Events;
 
 public class Flag : MonoBehaviour
 {
+    [SerializeField] private Collider _mapCollider;
+
     public event UnityAction OnPlaced;
+    public event UnityAction OnCanceled;
 
     private bool _isPlaceable;
+    private Coroutine _coroutine;
 
     private void OnEnable()
-    {    
+    {
         _isPlaceable = false;
+        _coroutine = StartCoroutine(SetNewPosition());
+    }
 
-        StartCoroutine(SetNewPosition());
+    private void OnDisable()
+    {
+        if (_coroutine != null)
+        {
+            StopCoroutine(_coroutine);
+        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -36,8 +47,6 @@ public class Flag : MonoBehaviour
         RaycastHit raycastHit;
         Vector3 targetPosition;
 
-        Collider map = FindObjectOfType<Map>().GetComponent<Collider>();
-        
         bool isClicked = false;
 
         while (isClicked == false)
@@ -50,8 +59,13 @@ public class Flag : MonoBehaviour
                 targetPosition.y = transform.position.y;
                 targetPosition.z = raycastHit.point.z;
 
-                Vector3 mapPointOnBound = map.ClosestPointOnBounds(targetPosition);
-                transform.position = mapPointOnBound;
+                transform.position = _mapCollider.ClosestPointOnBounds(targetPosition);
+            }
+
+            if (Input.GetMouseButtonDown(1))
+            {
+                OnCanceled?.Invoke();
+                gameObject.SetActive(false);
             }
 
             if (_isPlaceable && Input.GetMouseButtonDown(0))

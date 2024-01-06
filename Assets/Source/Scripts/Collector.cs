@@ -6,25 +6,29 @@ public class Collector : MonoBehaviour
     [SerializeField] private CommandCenter _commandCenter;
     [SerializeField] private float _speed;
 
-    public bool IsBusy { get; private set; }
-
-    private Color _originColor;
     private Rigidbody _rigidbody;
+    private Resource _resource;
+    private Color _builderColor;
+    private Color _originColor;
+    private Transform _parent;
     private Vector3 _targetPosition;
     private Vector3 _homePosition;
     private bool _isPickedUp;
 
+    public bool IsBusy { get; private set; }
+
     private void Start()
     {
-        IsBusy = false;
-
         _rigidbody = GetComponent<Rigidbody>();
 
         _originColor = GetComponent<Renderer>().material.color;
+        _builderColor = Color.green;
 
-        _homePosition = transform.parent.position;
+        _parent = transform.parent;
+        _homePosition = _parent.position;
 
         _isPickedUp = false;
+        IsBusy = false;
     }
 
     private void FixedUpdate()
@@ -48,11 +52,25 @@ public class Collector : MonoBehaviour
         TryBuild(other);
     }
 
-    public void SetPosition(Vector3 targetPosition)
+    public void SetResource(Resource resource)
     {
         IsBusy = true;
 
-        _targetPosition = targetPosition;
+        _resource = resource;
+
+        SetPosition(resource.transform.position);
+    }
+
+    public void SetNewBasePosition(Vector3 position)
+    {
+        IsBusy = true;
+        SetPosition(position);
+        GetComponent<Renderer>().material.color = _builderColor;
+    }
+
+    private void SetPosition(Vector3 position)
+    {
+        _targetPosition = position;
     }
 
     private void Move()
@@ -69,49 +87,50 @@ public class Collector : MonoBehaviour
 
     private void TryPickUp(Collider other)
     {
-        if (other.TryGetComponent<Resource>(out Resource resource) && resource.transform.position == _targetPosition)
+        if (other.TryGetComponent<Resource>(out Resource resource) && resource == _resource)
         {
-            resource.transform.position = GetComponentInChildren<BagPoint>().transform.position;
-            resource.transform.SetParent(transform);
-            _isPickedUp = true;
+            _resource.transform.position = GetComponentInChildren<BagPoint>().transform.position;
+            _resource.transform.SetParent(transform);
 
             SetPosition(_homePosition);
+
+            _isPickedUp = true;
         }
     }
 
     private void TryDropItem(Collider other)
     {
-        if (other.TryGetComponent<CommandCenter>(out CommandCenter commandCenter) && _isPickedUp
-            && transform.IsChildOf(commandCenter.transform))
+        if (other.TryGetComponent<CommandCenter>(out CommandCenter commandCenter)
+         && _isPickedUp && _parent == commandCenter.transform)
         {
-            IsBusy = false;
             _isPickedUp = false;
+            IsBusy = false;
         }
     }
 
     private void TryBuild(Collider other)
     {
-        if (other.TryGetComponent<Flag>(out Flag flag) && transform.parent == null
-           && flag.transform.position == _targetPosition)
+        if (other.TryGetComponent<Flag>(out Flag flag) && transform.parent == null)
         {
             IsBusy = false;
-
-            Build(flag.transform.position);
-
+            Build();
             UpdateParameters();
         }
     }
 
-    private void Build(Vector3 targetPosition)
+    private void Build()
     {
-        _commandCenter = Instantiate(_commandCenter, targetPosition, Quaternion.identity);
+        _targetPosition.y = _parent.position.y;
+        _commandCenter = Instantiate(_commandCenter, _targetPosition, Quaternion.identity);
+        _commandCenter.transform.SetParent(_parent.parent);
     }
 
     private void UpdateParameters()
     {
         GetComponent<Renderer>().material.color = _originColor;
 
-        transform.SetParent(_commandCenter.transform);
-        _homePosition = _commandCenter.transform.position;
+        _parent = _commandCenter.transform;
+        transform.SetParent(_parent);
+        _homePosition = _parent.position;
     }
 }

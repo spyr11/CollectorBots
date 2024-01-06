@@ -4,7 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(Map))]
 public class ResourceSpawner : MonoBehaviour
 {
-    [SerializeField] private Resource _resource;
+    [SerializeField] private Resource _resourcePrefab;
     [SerializeField] private Collider _map;
     [SerializeField] private float _seconds;
 
@@ -15,10 +15,10 @@ public class ResourceSpawner : MonoBehaviour
 
     private void Start()
     {
-        StartCoroutine(SetPoints(_seconds));
+        StartCoroutine(SetBreedPoints(_seconds));
     }
 
-    private IEnumerator SetPoints(float seconds)
+    private IEnumerator SetBreedPoints(float seconds)
     {
         WaitForSeconds waitForSeconds = new WaitForSeconds(seconds);
 
@@ -26,7 +26,7 @@ public class ResourceSpawner : MonoBehaviour
 
         while (isActive)
         {
-           Instantiate(_resource, transform.position + GetPosition(), _resource.transform.rotation);
+           Instantiate(_resourcePrefab, transform.position + GetPosition(), _resourcePrefab.transform.rotation);
 
             yield return waitForSeconds;
         }
