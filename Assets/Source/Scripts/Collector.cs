@@ -1,6 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(Renderer))]
 public class Collector : MonoBehaviour
 {
     [SerializeField] private CommandCenter _commandCenter;
@@ -8,11 +9,14 @@ public class Collector : MonoBehaviour
 
     private Rigidbody _rigidbody;
     private Resource _resource;
+    private Transform _parent;
+
     private Color _builderColor;
     private Color _originColor;
-    private Transform _parent;
+
     private Vector3 _targetPosition;
     private Vector3 _homePosition;
+
     private bool _isPickedUp;
 
     public bool IsBusy { get; private set; }

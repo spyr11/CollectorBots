@@ -6,11 +6,11 @@ public class Flag : MonoBehaviour
 {
     [SerializeField] private Collider _mapCollider;
 
-    public event UnityAction OnPlaced;
-    public event UnityAction OnCanceled;
-
     private bool _isPlaceable;
     private Coroutine _coroutine;
+
+    public event UnityAction OnPlaced;
+    public event UnityAction OnCanceled;
 
     private void OnEnable()
     {
@@ -45,6 +45,7 @@ public class Flag : MonoBehaviour
     private IEnumerator SetNewPosition()
     {
         RaycastHit raycastHit;
+
         Vector3 targetPosition;
 
         bool isClicked = false;

@@ -10,9 +10,6 @@ public class CommandCenter : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] private Collector _collector;
 
-    public event UnityAction OnCollected;
-    public event UnityAction OnBuildReady;
-
     private List<Collector> _collectors;
     private Queue<Resource> _resources;
     private MainData _mainData;
@@ -20,6 +17,9 @@ public class CommandCenter : MonoBehaviour, IPointerClickHandler
     private Wallet _wallet;
     private Flag _flag;
     private bool _isReadyToBuild;
+
+    public event UnityAction OnCollected;
+    public event UnityAction OnBuildReady;
 
     private void Awake()
     {

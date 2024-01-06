@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-[RequireComponent(typeof(Map))]
+[RequireComponent(typeof(Collider))]
 public class ResourceSpawner : MonoBehaviour
 {
     [SerializeField] private Resource _resourcePrefab;
@@ -26,7 +26,7 @@ public class ResourceSpawner : MonoBehaviour
 
         while (isActive)
         {
-           Instantiate(_resourcePrefab, transform.position + GetPosition(), _resourcePrefab.transform.rotation);
+            Instantiate(_resourcePrefab, transform.position + GetPosition(), _resourcePrefab.transform.rotation);
 
             yield return waitForSeconds;
         }
@@ -37,7 +37,7 @@ public class ResourceSpawner : MonoBehaviour
         float mapSizeX = _map.bounds.size.x / 2;
         float mapSizeZ = _map.bounds.size.z / 2;
         float positionY = 1f;
-        
+
         return new Vector3(Random.Range(-mapSizeX, mapSizeX), positionY, Random.Range(-mapSizeZ, mapSizeZ));
     }
 }

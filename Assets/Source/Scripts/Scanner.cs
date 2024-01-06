@@ -3,8 +3,8 @@ using UnityEngine;
 [RequireComponent(typeof(CommandCenter))]
 public class Scanner : MonoBehaviour
 {
-    [SerializeField] private LayerMask _layerMask;
     private Vector3 _originPosition;
+
     private float _currentRadius;
     private float _maxRadius;
     private float _minRadius;

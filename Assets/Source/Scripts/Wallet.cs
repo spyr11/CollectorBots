@@ -4,14 +4,16 @@ using UnityEngine.Events;
 [RequireComponent(typeof(CommandCenter))]
 public class Wallet : MonoBehaviour
 {
-    public event UnityAction OnDroneCollected;
-    public event UnityAction OnBaseCollected;
-
     private CommandCenter _commandCenter;
+
     private int _resourcesToCreateCollector;
     private int _resourcesToCreateBase;
     private int _money;
+
     private bool _isReadyToBuild;
+
+    public event UnityAction OnDroneCollected;
+    public event UnityAction OnBaseCollected;
 
     private void Start()
     {
