@@ -9,7 +9,6 @@ using UnityEngine.EventSystems;
 public class CommandCenter : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] private Collector _collector;
-    [SerializeField] private int _maxDrones;
 
     public event UnityAction OnCollected;
     public event UnityAction OnBuildReady;
